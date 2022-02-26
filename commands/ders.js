@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 
-const firebase = require('firebase/app');
+const { initializeApp } = require('firebase/app');
 const { getDatabase, get, ref, child } = require('firebase/database');
 const firebaseConfig = {
     apiKey: process.env.apiKey,
@@ -12,7 +12,7 @@ const firebaseConfig = {
     appId: process.env.appId,
     measurementId: process.env.measurementId,
 };
-firebase.initializeApp(firebaseConfig);
+initializeApp(firebaseConfig);
 
 var lesson1Start = "08:50",
     lesson1Finish = "09:30",
@@ -41,8 +41,8 @@ var lesson1Start = "08:50",
     lesson9Start = "16:20",
     lesson9Finish = "17:00";
 
-    let lessonStartingTimesArray = [lesson1Start, lesson2Start, lesson3Start, lesson4Start, lesson5Start, lesson6Start, lesson7Start, lesson8Start, lesson9Start];
-    let lessonFinishingTimesArray = [lesson1Finish, lesson2Finish, lesson3Finish, lesson4Finish, lesson5Finish, lesson6Finish, lesson7Finish, lesson8Finish, lesson9Finish];
+let lessonStartingTimesArray = [lesson1Start, lesson2Start, lesson3Start, lesson4Start, lesson5Start, lesson6Start, lesson7Start, lesson8Start, lesson9Start];
+let lessonFinishingTimesArray = [lesson1Finish, lesson2Finish, lesson3Finish, lesson4Finish, lesson5Finish, lesson6Finish, lesson7Finish, lesson8Finish, lesson9Finish];
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -51,11 +51,10 @@ module.exports = {
     async execute(interaction) {
         var today = new Date();
         var currentTime = `${today.getHours()} : ${today.getMinutes()}`;
-        var whichDayUserIsIn = today.getDay();
-        var whichLessonUserIsIn = 0;
-        var howManyMinutesUntilTheEndOfTheClass;
+        var whichDay = today.getDay();
+        var whichLesson = 0; 
 
-        switch (whichDayUserIsIn) {
+        switch (whichDay) {
             case 6:
                 await interaction.reply(`Cumartesi günleri bot tarafından desteklenmemektedir.`);
                 return;
@@ -67,99 +66,139 @@ module.exports = {
         // Zamana bakarak kullanıcın hangi ders içerisinde olduğuna bağlı olarak ona bir sayı atıyor.
         // Atanan sayılar eğer 10'dan küçükse, bu kullanıcının hangi derste bulunduğunun gerçek değeri.
         // Eğer tenefüsteyse bulunduğu hangi dersin teneffüsündeyse o dersin gerçek değerinin 10 katını alıyor.
-        // Örnek1: 6. dersteyse whichLessonUserIsIn = 6;
-        // Örnek2: 6. dersin teneffüsündeyse, yani 7. derse girecekse, whichLessonUserIsIn = 60;
-        // whichLessonUserIsIn = 40 (Öğle teneffüsü) | whichLessonUserIsIn = 90 (Okul bitti)
+        // Örnek1: 6. dersteyse whichLesson = 6;
+        // Örnek2: 6. dersin teneffüsündeyse, yani 7. derse girecekse, whichLesson = 60;
+        // whichLesson = 40 (Öğle teneffüsü) | whichLesson = 90 (Okul bitti)
 
         if (currentTime < lesson1Start) {
-            whichLessonUserIsIn = 0;
+            whichLesson = 0;
         }
         else if (lesson1Start < currentTime && currentTime < lesson1Finish) {
-            whichLessonUserIsIn = 1;
+            whichLesson = 1;
         }
         else if (lesson1Finish < currentTime && currentTime < lesson2Start) {
-            whichLessonUserIsIn = 10;
+            whichLesson = 10;
         }
         else if (lesson2Start < currentTime && currentTime < lesson2Finish) {
-            whichLessonUserIsIn = 2;
+            whichLesson = 2;
         }
         else if (lesson2Finish < currentTime && currentTime < lesson3Start) {
-            whichLessonUserIsIn = 20;
+            whichLesson = 20;
         }
         else if (lesson3Start < currentTime && currentTime < lesson3Finish) {
-            whichLessonUserIsIn = 3;
+            whichLesson = 3;
         }
         else if (lesson3Finish < currentTime && currentTime < lesson4Start) {
-            whichLessonUserIsIn = 30;
+            whichLesson = 30;
         }
 
         else if (lesson4Start < currentTime && currentTime < lesson4Finish) {
-            whichLessonUserIsIn = 4;
+            whichLesson = 4;
         }
         else if (lesson4Finish < currentTime && currentTime < lesson5Start) {
-            whichLessonUserIsIn = 40; // Öğle teneffüsü
+            whichLesson = 40; // Öğle teneffüsü
         }
         else if (lesson5Start < currentTime && currentTime < lesson5Finish) {
-            whichLessonUserIsIn = 5;
+            whichLesson = 5;
         }
         else if (lesson5Finish < currentTime && currentTime < lesson6Start) {
-            whichLessonUserIsIn = 50;
+            whichLesson = 50;
         }
         else if (lesson6Start < currentTime && currentTime < lesson6Finish) {
-            whichLessonUserIsIn = 6;
+            whichLesson = 6;
         }
         else if (lesson6Finish < currentTime && currentTime < lesson7Start) {
-            whichLessonUserIsIn = 60;
+            whichLesson = 60;
         }
 
         else if (lesson7Start < currentTime && currentTime < lesson7Finish) {
-            whichLessonUserIsIn = 7;
+            whichLesson = 7;
         }
         else if (lesson7Finish < currentTime && currentTime < lesson8Start) {
-            whichLessonUserIsIn = 70;
+            whichLesson = 70;
         }
         else if (lesson8Start < currentTime && currentTime < lesson8Finish) {
-            whichLessonUserIsIn = 8;
+            whichLesson = 8;
         }
         else if (lesson8Finish < currentTime && currentTime < lesson9Start) {
-            whichLessonUserIsIn = 80;
+            whichLesson = 80;
         }
         else if (lesson9Start < currentTime && currentTime < lesson9Finish) {
-            whichLessonUserIsIn = 9;
+            whichLesson = 9;
         }
         else if (currentTime > lesson9Finish) {
-            whichLessonUserIsIn = 90; // Okul bitmiş
+            whichLesson = 90; // Okul bitmiş
         }
 
-        /* switch(whichLessonUserIsIn){
-            case whichLessonUserIsIn > 10:
+        var replyMessage;
 
-                break;
-        } */
+        if(whichLesson < 0){
+            replyMessage = "Bugün daha okul başlamadı. 08:50'de yine gel.";
+        }
+        else if(whichLesson != 0 && whichLesson < 10){
+            var lessonTeacher, lessonName, zoomId, passcode;
 
-        var replyMessage, lessonTeacher, lessonName, zoomId, passcode;
+                // Veritabanı bağlantısı 
+                const dbRef = ref(getDatabase());
+                await get(child(dbRef, `Lessons/12C/${whichDay}/${whichLesson}`)).then((snapshot) => {
+                    if (snapshot.exists()) {
+                        lessonTeacher = snapshot.val().lessonTeacher;
+                        lessonName = snapshot.val().lessonName;
+                        zoomId = snapshot.val().zoomId;
+                        passcode = snapshot.val().passcode;
+                    } else {
+                        console.log("Veri yok.");
+                    }
+                }).catch((error) => {
+                    console.error(error);
+                });
 
-        const dbRef = ref(getDatabase());
-        await get(child(dbRef, `Lessons/12C/5/8`)).then((snapshot) => {
-            if (snapshot.exists()) {
-                lessonTeacher = snapshot.val().lessonTeacher;
-                lessonName = snapshot.val().lessonName;
-                zoomId = snapshot.val().zoomId;
-                passcode = snapshot.val().passcode;
-            } else {
-                console.log("Veri yok.");
-            }
-        }).catch((error) => {
-            console.error(error);
-        });
+                // Örnek replyMessage:
+                // Şu an 4. derstesin.
+                // Başlangıç Saati: 11:30 | Bitiş Saati: 12:10
+                // Öğretmen: Bjarne Stroustrup | Ders: Arrays in C++
+                // Zoom ID: 111 222 3344 | Şifre: I<3Coding
 
-        replyMessage = `Şu an ${whichLessonUserIsIn}. derstesin.
-Başlangıç Saati: ${lessonStartingTimesArray[whichLessonUserIsIn-1]} | Bitiş Saati: ${lessonFinishingTimesArray[whichLessonUserIsIn-1]}
-Öğretmen: ${lessonTeacher} | Ders: ${lessonName}
-Zoom ID: ${zoomId} | Şifre: ${passcode}`;
+                replyMessage = `Şu an ${whichLesson}. derstesin.\nBaşlangıç Saati: ${lessonStartingTimesArray[whichLesson - 1]} | Bitiş Saati: ${lessonFinishingTimesArray[whichLesson - 1]}\nÖğretmen: ${lessonTeacher} | Ders: ${lessonName}\nZoom ID: ${zoomId} | Şifre: ${passcode}`;
+        }
+        else if(whichLesson<90 && whichLesson > 10){
+                var whichBreak = whichLesson/10;
+                var previousLessonName, previousLessonTeacher, forthcomingLessonName, forthcomingLessonTeacher;
 
-        for(let i = 0; i<10; i++){
-            console.log(lessonStartingTimesArray[i]);
+                // Veritabanı bağlantısı 
+                const dbRef = ref(getDatabase());
+                await get(child(dbRef, `Lessons/12C/${whichDay}/${whichBreak}`)).then((snapshot) => {
+                    if (snapshot.exists()) {
+                        previousLessonTeacher = snapshot.val().lessonTeacher;
+                        previousLessonName = snapshot.val().lessonName;
+                    } else {
+                        console.log("Veri yok.");
+                    }
+                }).catch((error) => {
+                    console.error(error);
+                });
+
+                await get(child(dbRef, `Lessons/12C/${whichDay}/${whichBreak+1}`)).then((snapshot) => {
+                    if (snapshot.exists()) {
+                        forthcomingLessonTeacher = snapshot.val().lessonTeacher;
+                        forthcomingLessonName = snapshot.val().lessonName;
+                    } else {
+                        console.log("Veri yok.");
+                    }
+                }).catch((error) => {
+                    console.error(error);
+                });
+
+                // Örnek replyMessage:
+                // 1. Ders: AYT Matematik - Sal Khan (08:50 - 9:30)
+                // TENEFFÜS <-- Buradasın
+                // 2. Ders: AYT Matematik - Sal Khan (9:50 - 10:30)
+
+                replyMessage = 
+                `${whichBreak}. Ders: ${previousLessonName} - ${previousLessonTeacher} (${lessonStartingTimesArray[whichBreak-1]} - ${lessonFinishingTimesArray[whichBreak-1]})\nTENEFFÜS <--- Buradasın\n${whichBreak+1}. Ders: ${forthcomingLessonName} - ${forthcomingLessonTeacher} (${lessonStartingTimesArray[whichBreak]} - ${lessonFinishingTimesArray[whichBreak]})`;
+        }
+        else{
+            replyMessage = "Bugünlük okul bitmiş. Yeni ders yok.";
         }
 
         await interaction.reply(`${replyMessage}`);
