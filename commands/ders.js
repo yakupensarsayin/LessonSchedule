@@ -52,14 +52,14 @@ module.exports = {
         var today = new Date();
         var currentTime = `${today.getHours()} : ${today.getMinutes()}`;
         var whichDay = today.getDay();
-        var whichLesson = 0; 
+        var whichLesson = null;
 
         switch (whichDay) {
             case 6:
                 await interaction.reply(`Cumartesi günleri bot tarafından desteklenmemektedir.`);
                 return;
-            case 7:
-                await interaction.reply(`Bugün okul bulunmamaktadır.`);
+            case 0:
+                await interaction.reply(`Pazar günü okul bulunmamaktadır.`);
                 return;
         }
 
@@ -69,65 +69,32 @@ module.exports = {
         // Örnek1: 6. dersteyse whichLesson = 6;
         // Örnek2: 6. dersin teneffüsündeyse, yani 7. derse girecekse, whichLesson = 60;
         // whichLesson = 40 (Öğle teneffüsü) | whichLesson = 90 (Okul bitti)
-
-        if (currentTime < lesson1Start) {
-            whichLesson = 0;
-        }
-        else if (lesson1Start < currentTime && currentTime < lesson1Finish) {
-            whichLesson = 1;
-        }
-        else if (lesson1Finish < currentTime && currentTime < lesson2Start) {
-            whichLesson = 10;
-        }
-        else if (lesson2Start < currentTime && currentTime < lesson2Finish) {
-            whichLesson = 2;
-        }
-        else if (lesson2Finish < currentTime && currentTime < lesson3Start) {
-            whichLesson = 20;
-        }
-        else if (lesson3Start < currentTime && currentTime < lesson3Finish) {
-            whichLesson = 3;
-        }
-        else if (lesson3Finish < currentTime && currentTime < lesson4Start) {
-            whichLesson = 30;
+        
+        switch(currentTime){
+            case currentTime < lesson1Start:
+                whichLesson = 0;
+                break;
+            case currentTime > lesson9Finish:
+                whichLesson = 90;
+                break;
         }
 
-        else if (lesson4Start < currentTime && currentTime < lesson4Finish) {
-            whichLesson = 4;
-        }
-        else if (lesson4Finish < currentTime && currentTime < lesson5Start) {
-            whichLesson = 40; // Öğle teneffüsü
-        }
-        else if (lesson5Start < currentTime && currentTime < lesson5Finish) {
-            whichLesson = 5;
-        }
-        else if (lesson5Finish < currentTime && currentTime < lesson6Start) {
-            whichLesson = 50;
-        }
-        else if (lesson6Start < currentTime && currentTime < lesson6Finish) {
-            whichLesson = 6;
-        }
-        else if (lesson6Finish < currentTime && currentTime < lesson7Start) {
-            whichLesson = 60;
+        if(whichLesson === null){
+            for(i = 0; i < 9; i++){
+                if(lessonStartingTimesArray[i] <= currentTime && currentTime < lessonFinishingTimesArray[i]){
+                    whichLesson = i+1;
+                    break;
+                }
+            }
         }
 
-        else if (lesson7Start < currentTime && currentTime < lesson7Finish) {
-            whichLesson = 7;
-        }
-        else if (lesson7Finish < currentTime && currentTime < lesson8Start) {
-            whichLesson = 70;
-        }
-        else if (lesson8Start < currentTime && currentTime < lesson8Finish) {
-            whichLesson = 8;
-        }
-        else if (lesson8Finish < currentTime && currentTime < lesson9Start) {
-            whichLesson = 80;
-        }
-        else if (lesson9Start < currentTime && currentTime < lesson9Finish) {
-            whichLesson = 9;
-        }
-        else if (currentTime > lesson9Finish) {
-            whichLesson = 90; // Okul bitmiş
+        if(whichLesson === null){
+            for(i =0; i < 9; i++){
+                if(lessonFinishingTimesArray[i] <= currentTime && currentTime < lessonStartingTimesArray[i+1]){
+                    whichLesson = (i+1) * 10;
+                    break;
+                }
+            } 
         }
 
         var replyMessage;
@@ -199,7 +166,7 @@ module.exports = {
         }
         else{
             replyMessage = "Bugünlük okul bitmiş. Yeni ders yok.";
-        }
+        } 
 
         await interaction.reply(`${replyMessage}`);
     },
