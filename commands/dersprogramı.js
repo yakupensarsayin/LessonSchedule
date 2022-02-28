@@ -29,7 +29,7 @@ module.exports = {
 		if(whichDay == 6){
 			replyMessage = `Cumartesi günleri bot tarafından desteklenmemektedir.`;
 		}
-		else if(whichDay == 7){
+		else if(whichDay == 0){
 			replyMessage = "Bugün okul bulunmamaktadır.";
 		}
 		else{
