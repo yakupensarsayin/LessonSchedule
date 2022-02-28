@@ -14,43 +14,83 @@ const firebaseConfig = {
 };
 initializeApp(firebaseConfig);
 
-var lesson1Start = "08:50",
-    lesson1Finish = "09:30",
+function minuteAdder(time, minsToAdd){
+    var updatedTime, finalHour, finalMin;;
 
-    lesson2Start = "09:50",
-    lesson2Finish = "10:30",
+    var tempHours = time.slice(0,2);
+    var tempMins = time.slice(3);
 
-    lesson3Start = "10:40",
-    lesson3Finish = "11:20",
+    var hours = parseInt(tempHours);
+    var mins = parseInt(tempMins);
+    var updatedMins = mins + minsToAdd;
 
-    lesson4Start = "11:30",
-    lesson4Finish = "12:10",
+    if(updatedMins >= 60){
+        var hoursToAdd = 0;
+        while(updatedMins>=60){
+            updatedMins -= 60;
+            hoursToAdd += 1;
+        }
 
-    lesson5Start = "12:55",
-    lesson5Finish = "13:35",
+        var updatedHours = hours + hoursToAdd;
+        if(updatedHours<10) finalHour = `0${updatedHours}`;
+        else finalHour = updatedHours;
 
-    lesson6Start = "13:45",
-    lesson6Finish = "14:25",
+        if(updatedMins === 0) finalMin = `00`;
+        else if(updatedMins < 10) finalMin = `0${updatedMins}`;
+        else finalMin = `${updatedMins}`;
+        
+        updatedTime = `${finalHour}:${finalMin}`;
+    }
+    else{
+        var updatedHours = hours;
+        if(updatedHours<10) finalHour = `0${updatedHours}`;
+        else finalHour = updatedHours;
 
-    lesson7Start = "14:40",
-    lesson7Finish = "15:20",
+        if(updatedMins === 0) finalMin = `00`;
+        else if(updatedMins < 10) finalMin = `0${updatedMins}`;
+        else finalMin = `${updatedMins}`;
 
-    lesson8Start = "15:30",
-    lesson8Finish = "16:10",
+        updatedTime = `${finalHour}:${finalMin}`
+    }
 
-    lesson9Start = "16:20",
-    lesson9Finish = "17:00";
+    return updatedTime;
 
-let lessonStartingTimesArray = [lesson1Start, lesson2Start, lesson3Start, lesson4Start, lesson5Start, lesson6Start, lesson7Start, lesson8Start, lesson9Start];
-let lessonFinishingTimesArray = [lesson1Finish, lesson2Finish, lesson3Finish, lesson4Finish, lesson5Finish, lesson6Finish, lesson7Finish, lesson8Finish, lesson9Finish];
+}
+    let lessonStartTimes = [];
+    let lessonFinishTimes = [];
+
+    var firstLesson = "08:50";
+    var lessonDuration = 40, breakDuration = 10;
+
+    for(i = 0; i<9; i++){
+        if(i === 0){
+            breakDuration = 20;
+            lessonStartTimes.push(firstLesson);
+            lessonFinishTimes.push(minuteAdder(firstLesson, lessonDuration));
+            i++;
+        }
+        else if(i === 4) breakDuration = 45;
+        else if(i === 6) breakDuration = 15;
+        else breakDuration = 10;
+
+        previousLessonFinish = lessonFinishTimes[i-1];
+        var thisLessonStart = minuteAdder(previousLessonFinish, breakDuration);
+        var thisLessonFinish = minuteAdder(thisLessonStart, lessonDuration);
+        lessonStartTimes.push(thisLessonStart);
+        lessonFinishTimes.push(thisLessonFinish);
+    }
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ders')
         .setDescription('Güncel ders bilgilerini verir.'),
     async execute(interaction) {
+
         var today = new Date();
-        var currentTime = `${today.getHours()} : ${today.getMinutes()}`;
+        var hours;
+        if(today.getHours() < 10) hours = `0${today.getHours()}`;
+        else hours = today.getHours();
+        var currentTime = `${hours} : ${today.getMinutes()}`;
         var whichDay = today.getDay();
         var whichLesson = null;
 
@@ -70,18 +110,12 @@ module.exports = {
         // Örnek2: 6. dersin teneffüsündeyse, yani 7. derse girecekse, whichLesson = 60;
         // whichLesson = 40 (Öğle teneffüsü) | whichLesson = 90 (Okul bitti)
         
-        switch(currentTime){
-            case currentTime < lesson1Start:
-                whichLesson = 0;
-                break;
-            case currentTime > lesson9Finish:
-                whichLesson = 90;
-                break;
-        }
+        if(currentTime<lessonStartTimes[0]) whichLesson = 0;
+        else if(currentTime > lessonFinishTimes[8]) whichLesson = 90;
 
         if(whichLesson === null){
             for(i = 0; i < 9; i++){
-                if(lessonStartingTimesArray[i] <= currentTime && currentTime < lessonFinishingTimesArray[i]){
+                if(lessonStartTimes[i] <= currentTime && currentTime < lessonFinishTimes[i]){
                     whichLesson = i+1;
                     break;
                 }
@@ -90,7 +124,7 @@ module.exports = {
 
         if(whichLesson === null){
             for(i =0; i < 9; i++){
-                if(lessonFinishingTimesArray[i] <= currentTime && currentTime < lessonStartingTimesArray[i+1]){
+                if(lessonFinishTimes[i] <= currentTime && currentTime < lessonStartTimes[i+1]){
                     whichLesson = (i+1) * 10;
                     break;
                 }
@@ -126,7 +160,7 @@ module.exports = {
                 // Öğretmen: Bjarne Stroustrup | Ders: Arrays in C++
                 // Zoom ID: 111 222 3344 | Şifre: I<3Coding
 
-                replyMessage = `Şu an ${whichLesson}. derstesin.\nBaşlangıç Saati: ${lessonStartingTimesArray[whichLesson - 1]} | Bitiş Saati: ${lessonFinishingTimesArray[whichLesson - 1]}\nÖğretmen: ${lessonTeacher} | Ders: ${lessonName}\nZoom ID: ${zoomId} | Şifre: ${passcode}`;
+                replyMessage = `Şu an ${whichLesson}. derstesin.\nBaşlangıç Saati: ${lessonStartTimes[whichLesson - 1]} | Bitiş Saati: ${lessonFinishTimes[whichLesson - 1]}\nÖğretmen: ${lessonTeacher} | Ders: ${lessonName}\nZoom ID: ${zoomId} | Şifre: ${passcode}`;
         }
         else if(whichLesson<90 && whichLesson > 10){
                 var whichBreak = whichLesson/10;
@@ -162,7 +196,7 @@ module.exports = {
                 // 2. Ders: AYT Matematik - Sal Khan (9:50 - 10:30)
 
                 replyMessage = 
-                `${whichBreak}. Ders: ${previousLessonName} - ${previousLessonTeacher} (${lessonStartingTimesArray[whichBreak-1]} - ${lessonFinishingTimesArray[whichBreak-1]})\nTENEFFÜS <--- Buradasın\n${whichBreak+1}. Ders: ${forthcomingLessonName} - ${forthcomingLessonTeacher} (${lessonStartingTimesArray[whichBreak]} - ${lessonFinishingTimesArray[whichBreak]})`;
+                `${whichBreak}. Ders: ${previousLessonName} - ${previousLessonTeacher} (${lessonStartTimes[whichBreak-1]} - ${lessonFinishTimes[whichBreak-1]})\nTENEFFÜS <--- Buradasın\n${whichBreak+1}. Ders: ${forthcomingLessonName} - ${forthcomingLessonTeacher} (${lessonStartTimes[whichBreak]} - ${lessonFinishTimes[whichBreak]})`;
         }
         else{
             replyMessage = "Bugünlük okul bitmiş. Yeni ders yok.";
